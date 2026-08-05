@@ -1,0 +1,11 @@
+Step 1:
+
+the foundational Python code to define our 3-qubit state space and our strict NOT, CNOT, and Toffoli (CCX) gate library.
+
+step 2:
+
+for active minimization of expensive gates, we will use an A* search algorithm. The A* algorithm relies on a cost function $f(n) = g(n) + h(n)$:$g(n)$: The cumulative physical cost of the gates used so far (using the hardware weights we defined).$h(n)$: The Hamming-distance heuristic. For our permutation tuples, this simply counts how many truth-table rows are currently out of place compared to the identity state.
+
+step 3:
+
+
