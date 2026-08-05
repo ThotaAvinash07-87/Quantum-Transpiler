@@ -94,6 +94,22 @@ toolbox.register("mate", mate_circuit)
 toolbox.register("mutate", mutate_circuit)
 toolbox.register("select", tools.selNSGA2) # NSGA-II is great for multi-objective optimization
 
+def peephole_optimizer(circuit):
+    """
+    Scans the circuit and cancels out adjacent identical gates.
+    In quantum mechanics, UU = I for Hermitian gates.
+    """
+    optimized_stack = []
+    
+    for gate in circuit:
+        # If the stack has something AND the top of the stack matches the current gate
+        if optimized_stack and optimized_stack[-1] == gate:
+            optimized_stack.pop() # Annihilate!
+        else:
+            optimized_stack.append(gate)
+            
+    return optimized_stack
+
 def run_ga():
     print("--- Starting Genetic Algorithm Synthesis ---")
     
@@ -109,10 +125,20 @@ def run_ga():
     fronts = tools.sortNondominated(pop, len(pop), first_front_only=True)
     best_circuits = fronts[0]
     
-    print("\nBest circuits found (Logic Error, Total Cost):")
+    print("\nBest circuits found (Raw vs Optimized):")
     for circuit in best_circuits[:3]:
-        fitness = evaluate_circuit(circuit)
-        print(f"Metrics: {fitness} | Circuit: {circuit}")
+        # 1. Evaluate Raw Circuit
+        raw_fitness = evaluate_circuit(circuit)
+        
+        # 2. Apply Peephole Optimizer
+        clean_circuit = peephole_optimizer(circuit)
+        
+        # 3. Evaluate Clean Circuit
+        clean_fitness = evaluate_circuit(clean_circuit)
+        
+        print(f"Raw {raw_fitness}: {circuit}")
+        print(f"Opt {clean_fitness}: {clean_circuit}")
+        print("-" * 50)
 
 if __name__ == "__main__":
     run_ga()
