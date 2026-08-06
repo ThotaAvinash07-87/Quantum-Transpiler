@@ -240,5 +240,3 @@ Half-Adder,110,60,45.45,1,1,CCX_0_1_2 -> CX_0_1
 Feynman Fan-out,40,20,50.0,2,0,CX_0_1 -> CX_0_2
 Toffoli-Swap,150,70,53.33,2,1,CX_2_1 -> CCX_0_1_2 -> CX_2_1
 
-step 10:
-
