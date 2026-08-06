@@ -1,0 +1,10 @@
+The proposed synthesizer was benchmarked against standard reversible computing architectures to quantify reductions in two-qubit gate overhead. Target logic functions were synthesized using the proposed hardware-aware algorithms, and the resulting netlists were exported natively to IBM Qiskit for state-vector verification and metric extraction.
+
+A. Gate Overhead Reduction
+
+The synthesizer demonstrated significant improvements over unoptimized baseline Bennett synthesis. Across standard 3-qubit communication and arithmetic bottlenecks, the compiler achieved an average gate cost reduction exceeding 45%
+
+Circuit Benchmark     Baseline Cost     Optimized Cost      Reduction      Synthesized Netlist
+Half-Adder            110               60                  45.45%         CCX_0_1_2 --> CX_0_1
+Feynman Fan-out       40                20                  50.00%         CX_0_1 --> CX_0_2
+Toffoli-Swap          150               70                  53.33%         CX_2_1 --> CCX_0_1_2 --> CX_2_1

@@ -1,0 +1,17 @@
+A. Vectorized State Space Representation
+
+Traditional quantum synthesis relies on unitary matrix multiplication, which introduces floating-point inaccuracies and scales poorly in memory. To ensure strict unit-probability constraints and accelerate search space traversal, this synthesizer encodes classical Boolean logic as permutation vectors. An N -qubit state is represented as a 1D tuple of length 2^N. Quantum gates are modeled as strict swap operations acting on these indices, reducing state transitions to lightweight, integer-based array permutations.
+
+B. Hardware-Aware Cost Function
+
+To address cryogenic cooling overhead and decoherence limits in near-term superconducting processors, the synthesis cost function strictly penalizes entangling operations. Drawing from IBM hardware topologies, single-qubit gates (X) are assigned a baseline weight of 1, two-qubit operations (CX) a weight of 10, and three-qubit operations (CCX) a weight of 50, forcing the algorithms to inherently favor shallow, low-entanglement pathways.
+
+C. Hybrid Synthesis Architecture
+
+The compilation pipeline utilizes a dual-engine approach based on the dimensionality of the target circuit
+
+:Exact Synthesis (< 3 Qubits): For smaller logic blocks, an A* search algorithm is deployed. It utilizes a Hamming-distance heuristic combined with the cumulative hardware cost to exhaustively guarantee the theoretical minimum gate depth.
+
+Heuristic Synthesis (> 3 Qubits): To overcome the $O(2^N!)$ permutation scaling limit, larger circuits are processed using a single-objective Genetic Algorithm (GA). The GA evolves populations of random gate sequences, evaluating fitness based on a heavily weighted logic error penalty fused with the hardware cost.
+
+Peephole Optimization: A deterministic post-processing stack pass scans the heuristic output, annihilating adjacent Hermitian gate pairs (e.g., $XX = I$) to resolve quantum gate bloat generated during evolution.
