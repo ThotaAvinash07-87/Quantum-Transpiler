@@ -1,0 +1,25 @@
+Mapping the Code to Your Abstract
+
+"Quantum compilers currently struggle with two-qubit gate bloat, which directly increases the cryogenic cooling overhead on superconducting processors."
+
+The Hardware Reality: In traditional ECE, optimizing logic gates or minimizing instruction cycles on a microcontroller saves power. In superconducting quantum hardware, every microwave pulse used for a two-qubit CX gate dumps heat into the dilution refrigerator. By strictly penalizing CX (cost 10) and CCX (cost 50) gates in our fitness evaluator, your compiler treats quantum synthesis as a thermal optimization problem.
+
+"The tool encodes classical logic as truth-table vectors and models gates as permutation matrices to ensure strict quantum unit-probability constraints are met."
+
+The Software Engine: Instead of relying on slow, memory-intensive matrix multiplications, your tool handles permutations as 1D arrays and integer tuples. This vector-based approach is computationally lightweight, completely avoids non-unitary floating-point errors, and scales dynamically to $N$-qubit systems.
+
+"To actively minimize the number of costly CNOT and Toffoli gates, the synthesizer applies an A search with a Hamming-distance heuristic for small functions ($\leq$ 3 bits)."
+
+*The Exact Solver: Your quantum_synth.py script proved this. The A* engine explored 1,447 nodes and proved that the mathematically perfect cost for a Half-Adder is 60 (1 CCX, 1 CX).
+
+"For larger circuits, it shifts to a genetic algorithm (using the DEAP library) to optimize a weighted cost function based on physical gate execution overhead."
+
+The Heuristic Solver: Your quantum_ga.py script just proved this scales to 4 qubits. By fusing Logic Error and Gate Cost into a single objective (LogicError * 1000) + Cost, the GA aggressively hunted down the zero-error solution in a massive $16!$ search space without crashing your machine's memory."
+
+The final netlists are exported directly to IBM Qiskit, where state-vector simulation verifies functional correctness and evaluates gate metrics."
+
+The Bridge: The export_to_qiskit() function successfully parsed your internal string representations (like CX_0_1) directly into a native qiskit.QuantumCircuit, allowing for visual ASCII verification and hardware metric extraction using .count_ops().
+
+"By adapting classical Electronic Design Automation (EDA) techniques..."
+
+The EDA Cleanup: The peephole_optimizer() stack we implemented is a textbook classical EDA technique. It successfully caught the GA's messy ['CX_2_1', 'CX_2_1'] pairs and annihilated them, mirroring how a classical compiler cleans up redundant instructions.
