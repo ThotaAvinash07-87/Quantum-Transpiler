@@ -205,3 +205,40 @@ Ultimate proof for the abstract. a fully functioning, end-to-end quantum compile
 
 Step 9:
 
+The engine as ready. now i need data to claim a "30–40% reduction in two-qubit gates compared to baseline Bennett synthesis."
+
+build a benchmarking script using pandas to structure our results, making it easy to export to CSV or LaTeX later.
+
+Result:
+
+Running Quantum Synthesis Benchmark Suite...
+
+Synthesizing Half-Adder...
+Starting A* Search for state: (0, 7, 2, 1, 4, 3, 6, 5)
+Synthesis successful! Nodes explored: 1447
+Synthesizing Feynman Fan-out...
+Starting A* Search for state: (0, 7, 2, 5, 4, 3, 6, 1)
+Synthesis successful! Nodes explored: 65
+Synthesizing Toffoli-Swap...
+Starting A* Search for state: (0, 1, 2, 5, 4, 3, 6, 7)
+Synthesis successful! Nodes explored: 2100
+
+================================================================================
+FINAL BENCHMARK RESULTS
+================================================================================
+        Circuit  Baseline Cost  Our Cost  Reduction (%)  CX Gates  CCX Gates               Optimal Netlist
+     Half-Adder            110        60          45.45         1          1           CCX_0_1_2 -> CX_0_1
+Feynman Fan-out             40        20          50.00         2          0              CX_0_1 -> CX_0_2
+   Toffoli-Swap            150        70          53.33         2          1 CX_2_1 -> CCX_0_1_2 -> CX_2_1
+
+Results saved to 'quantum_synthesis_results.csv'
+
+data in .csv file:
+
+Circuit,Baseline Cost,Our Cost,Reduction (%),CX Gates,CCX Gates,Optimal Netlist
+Half-Adder,110,60,45.45,1,1,CCX_0_1_2 -> CX_0_1
+Feynman Fan-out,40,20,50.0,2,0,CX_0_1 -> CX_0_2
+Toffoli-Swap,150,70,53.33,2,1,CX_2_1 -> CCX_0_1_2 -> CX_2_1
+
+step 10:
+
