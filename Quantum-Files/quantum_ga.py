@@ -3,7 +3,6 @@ import numpy as np
 from deap import base, creator, tools, algorithms
 
 # --- REUSE CORE COMPONENTS ---
-# We redefine the core library here for the 3-qubit proof of concept.
 IDENTITY_STATE = (0, 1, 2, 3, 4, 5, 6, 7)
 
 GATE_LIBRARY = {
@@ -28,27 +27,22 @@ def get_cost(gate_name):
     if "CX" in gate_name: return 10
     return 1
 
-# --- DEAP GENETIC ALGORITHM SETUP ---
+# --- DEAP GENETIC ALGORITHM SETUP (SINGLE OBJECTIVE) ---
 
-# We want to MINIMIZE two objectives: (1) Logic Error, (2) Gate Cost
-creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0))
+# We now use a SINGLE objective (minimizing one combined score)
+creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
 creator.create("Individual", list, fitness=creator.FitnessMin)
 
 toolbox = base.Toolbox()
-
-# Attribute generator: pick a random gate
 toolbox.register("attr_gate", random.choice, GATE_NAMES)
-
-# Structure initializers: an individual is a list of random gates (max length 10)
 toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_gate, n=random.randint(2, 10))
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
-# The Target State we want to synthesize (e.g., Half-Adder)
 TARGET_STATE = (0, 7, 2, 1, 4, 3, 6, 5)
 
 def evaluate_circuit(individual):
     """
-    Runs the circuit and returns (Logic Error, Total Cost)
+    Returns a SINGLE score: (Logic Error * 1000) + Cost
     """
     current_state = IDENTITY_STATE
     total_cost = 0
@@ -57,87 +51,66 @@ def evaluate_circuit(individual):
         current_state = apply_gate(current_state, GATE_LIBRARY[gate])
         total_cost += get_cost(gate)
         
-    # Logic Error = Hamming distance to the TARGET_STATE
     logic_error = sum(1 for i, v in enumerate(current_state) if v != TARGET_STATE[i])
     
-    return (logic_error, total_cost)
+    # Massive penalty for wrong logic
+    final_score = (logic_error * 1000) + total_cost
+    return (final_score,) # DEAP requires a tuple return
 
 def mutate_circuit(individual):
-    """
-    Custom Mutation: Randomly add, remove, or replace a gate
-    """
     if len(individual) == 0:
         return individual,
     
     mutation_type = random.choice(["add", "remove", "replace"])
-    
     if mutation_type == "add":
         individual.insert(random.randint(0, len(individual)), random.choice(GATE_NAMES))
     elif mutation_type == "remove" and len(individual) > 1:
         individual.pop(random.randint(0, len(individual)-1))
     elif mutation_type == "replace":
         individual[random.randint(0, len(individual)-1)] = random.choice(GATE_NAMES)
-        
     return individual,
 
 def mate_circuit(ind1, ind2):
-    """
-    Safe Crossover: Only splice if both circuits have at least 2 gates
-    """
     if len(ind1) >= 2 and len(ind2) >= 2:
         return tools.cxTwoPoint(ind1, ind2)
-    return ind1, ind2  # If too short, return them unaltered
+    return ind1, ind2
 
-# Register genetic operators
 toolbox.register("evaluate", evaluate_circuit)
 toolbox.register("mate", mate_circuit) 
 toolbox.register("mutate", mutate_circuit)
-toolbox.register("select", tools.selNSGA2) # NSGA-II is great for multi-objective optimization
+# Switched from NSGA2 to Tournament selection for single-objective
+toolbox.register("select", tools.selTournament, tournsize=3) 
 
 def peephole_optimizer(circuit):
-    """
-    Scans the circuit and cancels out adjacent identical gates.
-    In quantum mechanics, UU = I for Hermitian gates.
-    """
+    """Scans the circuit and cancels out adjacent identical gates."""
     optimized_stack = []
-    
     for gate in circuit:
-        # If the stack has something AND the top of the stack matches the current gate
         if optimized_stack and optimized_stack[-1] == gate:
-            optimized_stack.pop() # Annihilate!
+            optimized_stack.pop() 
         else:
             optimized_stack.append(gate)
-            
     return optimized_stack
 
 def run_ga():
     print("--- Starting Genetic Algorithm Synthesis ---")
     
-    # Create a population of 200 random circuits
     pop = toolbox.population(n=200)
     
-    # Run evolution for 50 generations
-    # cxpb = probability of mating (crossover)
-    # mutpb = probability of mutation
+    # Run evolution
     algorithms.eaMuPlusLambda(pop, toolbox, mu=200, lambda_=400, cxpb=0.5, mutpb=0.3, ngen=50, verbose=False)
     
-    # Extract the best circuits
-    fronts = tools.sortNondominated(pop, len(pop), first_front_only=True)
-    best_circuits = fronts[0]
+    # Extract the absolute best circuits based on our single combined score
+    best_circuits = tools.selBest(pop, k=3)
     
-    print("\nBest circuits found (Raw vs Optimized):")
-    for circuit in best_circuits[:3]:
-        # 1. Evaluate Raw Circuit
-        raw_fitness = evaluate_circuit(circuit)
+    print("\nBest circuits found (Score format: LogicError*1000 + Cost):")
+    for circuit in best_circuits:
+        raw_score = evaluate_circuit(circuit)[0]
         
-        # 2. Apply Peephole Optimizer
         clean_circuit = peephole_optimizer(circuit)
+        clean_score = evaluate_circuit(clean_circuit)[0]
         
-        # 3. Evaluate Clean Circuit
-        clean_fitness = evaluate_circuit(clean_circuit)
-        
-        print(f"Raw {raw_fitness}: {circuit}")
-        print(f"Opt {clean_fitness}: {clean_circuit}")
+        print(f"Raw Score {raw_score}: {circuit}")
+        print(f"Opt Score {clean_score}: {clean_circuit}")
         print("-" * 50)
 
 if __name__ == "__main__":
