@@ -240,3 +240,41 @@ Half-Adder,110,60,45.45,1,1,CCX_0_1_2 -> CX_0_1
 Feynman Fan-out,40,20,50.0,2,0,CX_0_1 -> CX_0_2
 Toffoli-Swap,150,70,53.33,2,1,CX_2_1 -> CCX_0_1_2 -> CX_2_1
 
+
+Step 10: 
+
+now i am looking for simulate this on my Arduino so i made two files, the Arduino_bridge.py to give commands. and the Pulse_Controller.cpp to deploy in Arduino and run the circuits. 
+
+since Arduino can't understand python, i installed pyserial and then try to command by running
+
+at first step i found this in vs code terminal 
+
+Result: 
+
+(myenv) E:\Quantum-Projects\Quantum-Files>python arduino_bridge.py
+Opening Serial Connection to COM10...
+Synthesizing Optimal Circuit...
+Starting A* Search for state: (0, 7, 2, 1, 4, 3, 6, 5)
+Synthesis successful! Nodes explored: 1447
+
+Press ENTER to run the UNOPTIMIZED circuit on hardware...
+
+Executing Unoptimized Half-Adder on Physical Hardware...
+Gate Sequence: ['X1', 'X1', 'CCX_0_1_2', 'CX_2_1', 'CX_2_1', 'CX_0_1']
+Firing Pulse for: X1 ... Completed.
+Firing Pulse for: X1 ... Completed.
+Firing Pulse for: CCX_0_1_2 ... Completed.
+Firing Pulse for: CX_2_1 ... Completed.
+Firing Pulse for: CX_2_1 ... Completed.
+Firing Pulse for: CX_0_1 ... Completed.
+
+=> Unoptimized Half-Adder Execution Time: 8.31 seconds
+
+Press ENTER to run YOUR OPTIMIZED circuit on hardware...
+
+Executing Optimized Half-Adder on Physical Hardware...
+Gate Sequence: ['CCX_0_1_2', 'CX_0_1']
+Firing Pulse for: CCX_0_1_2 ... Completed.
+Firing Pulse for: CX_0_1 ... Completed.
+
+=> Optimized Half-Adder Execution Time: 6.06 seconds
