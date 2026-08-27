@@ -1,60 +1,58 @@
-# Quantum Transpiler
+# Hardware-Aware Quantum Circuit Synthesis (Quantum-Compiler)
 
-An end-to-end quantum transpiler pipeline designed to actively minimize expensive quantum gates and mitigate quantum gate bloat. This project leverages A* search and Genetic Algorithms (GA) to synthesize optimal quantum circuits, achieving up to a 53% reduction in two-qubit gate costs compared to baseline synthesis methods.
+An end-to-end quantum transpiler pipeline designed to actively minimize expensive two-qubit hardware gates and mitigate quantum gate bloat. This project leverages A* search and Genetic Algorithms (GA) to synthesize optimal quantum circuits, achieving up to a 53% reduction in gate costs compared to baseline synthesis methods.
 
-## Key Features
+## 📂 Repository Structure
 
-* **3-Qubit and 4-Qubit State Space Support:** Defines a strict NOT, CNOT, and Toffoli (CCX) gate library for 3-qubit states, and programmatically generates permutations for 4-qubit systems (handling ~20.9 trillion state permutations) using bitwise logic.
-* **A* Search Optimization:** Uses an A* algorithm with a Hamming-distance heuristic to systematically explore circuit configurations and find the absolute cheapest sequence of gates.
-* **Genetic Algorithm (GA) Synthesizer:** Scales to larger state spaces where A* search would run out of memory, evolving random circuits over generations using the `deap` library.
-* **Peephole Optimizer:** A fast, post-synthesis cleanup pass that scans the generated netlist and deletes redundant gate pairs to solve the common issue of quantum gate bloat.
-* **Qiskit Integration:** Exports optimized circuits to Qiskit to display circuit representations and native gate metrics.
-* **Hardware Pulse Simulation:** Bridges the synthesized circuits to an Arduino via `pyserial`, allowing pulse execution and performance timing on physical hardware.
+* **`/Resources Files/`**: Python (Matplotlib) scripts utilized to generate mathematically exact, high-resolution circuit diagrams and algorithmic flowcharts for presentation graphics.
+* **`/hardware_demo/`**: Contains the Embedded C implementation (`Pulse_Controller.cpp`) and the serial bridge (`arduino_bridge.py`) for physical pulse execution on an Arduino Uno.
+* **Core Synthesizers**: 
+  * `quantum_synth.py`: Foundational script defining state spaces and executing A* search optimization.
+  * `quantum_ga.py`: Genetic Algorithm (GA) synthesizer scaling optimization to 4-qubit systems.
 
-## Project Structure & Core Files
+## ⚙️ Key Features
 
-* `quantum_synth.py`: The foundational Python code that defines the state space, gate library, and runs the A* search synthesis.
-* `quantum_ga.py`: The Genetic Algorithm synthesizer that evaluates random circuits over generations, utilizing a single-objective approach and peephole optimization.
-* `arduino_bridge.py`: A Python script using `pyserial` to open a connection and send circuit pulse commands to physical hardware.
-* `Pulse_Controller.cpp`: The deployment file for Arduino to receive commands and execute the circuit pulses.
-* `quantum_synthesis_results.csv`: A benchmarking script output that structures results for easy export to CSV or LaTeX.
+* **Advanced State Space Support:** Defines a strict NOT, CNOT, and Toffoli (CCX) gate library for 3-qubit states, and programmatically generates permutations for 4-qubit systems (handling ~20.9 trillion state permutations) using bitwise logic.
+* **Exact A* Search Optimization:** Uses a shortest-path A* algorithm combined with a Hamming-distance heuristic to systematically guarantee the absolute cheapest sequence of hardware operations.
+* **Genetic Algorithm (GA) Scaling:** Scales to massive search spaces where exact algorithms hit memory limits. Evolves circuits using the `deap` library with a single-objective fitness function: `Score = (Logic Error * 1000) + Gate Cost`.
+* **Peephole Optimizer:** A fast, classical EDA-style post-synthesis pass that scans the generated netlist and collapses localized redundant gate pairs (e.g., X -> Toffoli -> X).
+* **Qiskit Integration:** Natively exports synthesized logical outputs to Qiskit for circuit rendering and physical coupling map analysis.
 
-## Methodology
+## 📊 Benchmark Results
 
-### 1. A* Synthesis (`quantum_synth.py`)
-The A* search minimizes expensive gates by relying on the cost function `f(n) = g(n) + h(n)`:
-* **`g(n)`**: The cumulative physical cost of the gates used so far (based on defined hardware weights).
-* **`h(n)`**: The Hamming-distance heuristic, which counts how many truth-table rows are currently out of place compared to the identity state.
+The benchmarking suite compares our optimal transpiled netlists against baseline naive translation costs:
 
-### 2. GA Synthesis & Peephole Optimization (`quantum_ga.py`)
-For 4-qubit systems, the Genetic Algorithm evolves random circuits. To ensure logical correctness over gate savings, it uses a Single Objective mathematical approach: `Score = (Logic Error * 1000) + Gate Cost`. This heavily penalizes logic errors. A classical EDA Peephole Optimizer acts as a post-synthesis pass to delete lazy, redundant gates generated by the GA.
+| Circuit | Baseline Cost | Optimized Cost | Reduction | Gate Composition | Optimal Netlist |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Half-Adder** | 110 | 60 | **45.45%** | 1 CX, 1 CCX | `CCX_0_1_2 -> CX_0_1` |
+| **Feynman Fan-out** | 40 | 20 | **50.00%** | 2 CX, 0 CCX | `CX_0_1 -> CX_0_2` |
+| **Toffoli-Swap** | 150 | 70 | **53.33%** | 2 CX, 1 CCX | `CX_2_1 -> CCX_0_1_2 -> CX_2_1` |
 
-## Benchmark Results
+## 🎛️ Physical Hardware Deployment
 
-The benchmarking suite compares our optimal netlists against baseline costs:
-
-| Circuit | Baseline Cost | Our Cost | Reduction (%) | CX Gates | CCX Gates | Optimal Netlist |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Half-Adder** | 110 | 60 | 45.45% | 1 | 1 | `CCX_0_1_2 -> CX_0_1` |
-| **Feynman Fan-out** | 40 | 20 | 50.00% | 2 | 0 | `CX_0_1 -> CX_0_2` |
-| **Toffoli-Swap** | 150 | 70 | 53.33% | 2 | 1 | `CX_2_1 -> CCX_0_1_2 -> CX_2_1` |
-
-## Hardware Deployment Simulation
-
-The optimal circuits are deployed via `arduino_bridge.py` to test physical hardware execution times. For the Half-Adder circuit, the execution time was drastically improved:
+The optimized circuits are deployed via `arduino_bridge.py` via `pyserial` to validate execution logic on physical hardware. For the Half-Adder circuit benchmark, the wall-clock execution time was drastically improved:
 * **Unoptimized Execution Time:** 8.31 seconds
 * **Optimized Execution Time:** 6.06 seconds
 
-## Usage
+## 🚀 Usage
 
-Run the A* synthesis to generate optimized gate sequences:
+Execute the A* synthesis to generate exact optimal gate sequences:
 ```bash
 python quantum_synth.py
+```
 
-Run the Genetic Algorithm for scaling to larger (4-qubit) circuits:
+Execute the Genetic Algorithm to synthesize larger (4-qubit) multi-state circuits:
 ```bash
 python quantum_ga.py
+```
 
-Run the hardware execution simulation to send pulses to the Arduino:
+Run the hardware validation to transmit microwave control pulses to the serial board:
 ```bash
 python arduino_bridge.py
+```
+
+---
+### 🎓 Academic Context
+**Author:** Thota Venkata Avinash Naidu  
+**Affiliation:** Department of Electronics and Communication Engineering, Andhra University  
+**Presentation:** QUEST-AI 2026
