@@ -1,6 +1,6 @@
-# Quantum Compiler
+# Quantum Transpiler
 
-An end-to-end quantum compiler pipeline designed to actively minimize expensive quantum gates and mitigate quantum gate bloat. This project leverages A* search and Genetic Algorithms (GA) to synthesize optimal quantum circuits, achieving up to a 53% reduction in two-qubit gate costs compared to baseline synthesis methods.
+An end-to-end quantum transpiler pipeline designed to actively minimize expensive quantum gates and mitigate quantum gate bloat. This project leverages A* search and Genetic Algorithms (GA) to synthesize optimal quantum circuits, achieving up to a 53% reduction in two-qubit gate costs compared to baseline synthesis methods.
 
 ## Key Features
 
